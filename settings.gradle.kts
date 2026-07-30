@@ -1,30 +1,31 @@
 pluginManagement {
     repositories {
-        maven { url=uri ("https://maven.aliyun.com/repository/releases") }
-        maven { url=uri ("https://maven.aliyun.com/repository/google") }
-        maven { url=uri ("https://maven.aliyun.com/repository/central") }
-        maven { url=uri ("https://maven.aliyun.com/repository/gradle-plugin") }
-        maven { url=uri ("https://maven.aliyun.com/repository/public") }
-        maven { url=uri ("https://jitpack.io") }
-        google()  // Move this to the top and remove the content filter
-        mavenCentral()
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/central") }
+        maven { url = uri("https://maven.aliyun.com/repository/releases") }
         gradlePluginPortal()
+        google()
+        mavenCentral()
     }
 }
 
 dependencyResolutionManagement {
-    // Use PREFER_SETTINGS to allow the Flutter plugin to add its own repository without failing the build.
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
-        maven { url=uri ("https://maven.aliyun.com/repository/releases") }
-        maven { url=uri ("https://maven.aliyun.com/repository/google") }
-        maven { url=uri ("https://maven.aliyun.com/repository/central") }
-        maven { url=uri ("https://maven.aliyun.com/repository/gradle-plugin") }
-        maven { url=uri ("https://maven.aliyun.com/repository/public") }
-        maven { url=uri ("https://jitpack.io") }
-        google()  // Ensure this is present without restrictions
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/central") }
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
+        maven { url = uri("https://maven.aliyun.com/repository/releases") }
+
+        maven { url = uri("https://mirrors.cloud.tencent.com/flutter/download.flutter.io") }
+        // JitPack
+        maven { url = uri("https://jitpack.io") }
+        google()
         mavenCentral()
-        // It's still good practice to declare the Flutter repo here.
+        // Flutter
         maven { url = uri("https://storage.googleapis.com/download.flutter.io") }
     }
 }
