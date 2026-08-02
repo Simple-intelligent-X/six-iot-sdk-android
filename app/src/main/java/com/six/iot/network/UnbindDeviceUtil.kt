@@ -18,7 +18,7 @@ class UnbindDeviceUtil {
 
     fun unbindDevice(token: String, deviceGuid: String, hook: UnbindHandlerHook) {
         // TODO: Move this URL to your BuildConfig or a centralized Config file
-        val baseUrl = "https://mgt.iot.shuhenglianchang.com/iot/device/unbind"
+        val baseUrl = "https://ext.iot.shuhenglianchang.com/iot/device/unbind"
         val httpUrl = baseUrl.toHttpUrlOrNull()
 
         if (httpUrl == null) {

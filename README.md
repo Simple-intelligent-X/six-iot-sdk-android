@@ -53,7 +53,7 @@ buildConfigField("String", "MQTT_BROKER_URL", "\"wss://shuhenglianchang.com:3008
 //buildConfigField("String", "MQTT_BROKER_URL", "\"wss://a2o5o645mb29bc-ats.iot.ap-southeast-1.amazonaws.com/mqtt\"")
 buildConfigField("String", "AWS_IOT_CUSTOM_AUTHZ_USERNAME", "\"username?x-amz-customauthorizer-name=six-iot-authorizer\"")
 buildConfigField("String", "USER_INFO_URL", "\"https://iam.shuhenglianchang.com/userinfo\"")
-buildConfigField("String", "USER_DEVICES_URL", "\"https://mgt.iot.shuhenglianchang.com/iot/device/user/devices?search=&pageCurrentIndex=1\"")
+buildConfigField("String", "USER_DEVICES_URL", "\"https://ext.iot.shuhenglianchang.com/iot/device/user/devices?search=&pageCurrentIndex=1\"")
 ```
 
 Next, update your Identity Provider (IdP) endpoints in `lib-auth/src/main/res/raw/auth_config.json`:

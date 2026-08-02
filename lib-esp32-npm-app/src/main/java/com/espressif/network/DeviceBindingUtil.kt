@@ -26,7 +26,7 @@ class DeviceBindingUtil {
         hook: BindingHandlerHook
     ) {
         // TODO: Move this URL to your BuildConfig or a centralized Config file
-        val baseUrl = "https://mgt.iot.shuhenglianchang.com/iot/device/binding"
+        val baseUrl = "https://ext.iot.shuhenglianchang.com/iot/device/binding"
         val httpUrl = baseUrl.toHttpUrlOrNull()
 
         if (httpUrl == null) {
