@@ -1,11 +1,11 @@
 package com.espressif.network
 
 import android.util.Log
+import com.espressif.wifi_provisioning.BuildConfig
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okio.IOException
-
 // A simple interface for handling the binding response
 interface BindingHandlerHook {
     fun onBindingSuccess(responseMap: Map<String, Any>)
@@ -26,7 +26,7 @@ class DeviceBindingUtil {
         hook: BindingHandlerHook
     ) {
         // TODO: Move this URL to your BuildConfig or a centralized Config file
-        val baseUrl = "https://ext.iot.shuhenglianchang.com/iot/device/binding"
+        val baseUrl = BuildConfig.DEVICE_BIND_URL
         val httpUrl = baseUrl.toHttpUrlOrNull()
 
         if (httpUrl == null) {

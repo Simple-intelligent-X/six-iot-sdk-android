@@ -6,17 +6,12 @@ android {
     namespace 'com.espressif.espblufi'
     compileSdk 36
 
-    buildFeatures {
-        viewBinding true
-        dataBinding true
-    }
-
     defaultConfig {
         minSdk 29
         targetSdk 34
+
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -25,6 +20,11 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+
+    buildFeatures {
+        viewBinding true
+        dataBinding true
     }
 
     compileOptions {
@@ -38,12 +38,12 @@ dependencies {
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
-    implementation libs.material.v161
     implementation libs.androidx.appcompat.v142
     implementation libs.androidx.gridlayout
     implementation libs.androidx.preference
-
     implementation libs.androidx.swiperefreshlayout
+
+    implementation libs.material.v161
     implementation libs.rxjava
     implementation libs.rxandroid
 

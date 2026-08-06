@@ -2,6 +2,7 @@ package com.six.iot.network
 
 import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.six.iot.BuildConfig
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okio.IOException
@@ -17,8 +18,7 @@ class UnbindDeviceUtil {
     private val objectMapper: ObjectMapper = ObjectMapper()
 
     fun unbindDevice(token: String, deviceGuid: String, hook: UnbindHandlerHook) {
-        // TODO: Move this URL to your BuildConfig or a centralized Config file
-        val baseUrl = "https://ext.iot.shuhenglianchang.com/iot/device/unbind"
+        val baseUrl = BuildConfig.DEVICE_UNBIND_URL
         val httpUrl = baseUrl.toHttpUrlOrNull()
 
         if (httpUrl == null) {

@@ -10,9 +10,9 @@ android {
     defaultConfig {
         minSdk 29
         targetSdk 34
+
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -30,15 +30,15 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
 
+    implementation(libs.material)
     implementation(libs.appauth)
     implementation(libs.bumptech.glide)
     implementation(libs.squareup.okio)
     implementation(libs.joda.time)
+
     annotationProcessor(libs.bumptech.glide.compiler)
 
     testImplementation(libs.junit)
