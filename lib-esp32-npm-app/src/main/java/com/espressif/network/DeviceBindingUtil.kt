@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okio.IOException
+
 // A simple interface for handling the binding response
 interface BindingHandlerHook {
     fun onBindingSuccess(responseMap: Map<String, Any>)
@@ -25,7 +26,6 @@ class DeviceBindingUtil {
         signature: String,
         hook: BindingHandlerHook
     ) {
-        // TODO: Move this URL to your BuildConfig or a centralized Config file
         val baseUrl = BuildConfig.DEVICE_BIND_URL
         val httpUrl = baseUrl.toHttpUrlOrNull()
 
@@ -62,8 +62,8 @@ class DeviceBindingUtil {
                     return
                 }
 
-                val responseBody = response.body?.string()
-                if (responseBody.isNullOrEmpty()) {
+                val responseBody = response.body.string()
+                if (responseBody.isEmpty()) {
                     Log.e(tag, "Device binding response body was empty.")
                     hook.onBindingFailure()
                     return
