@@ -20,7 +20,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
-import com.espressif.espblufi.constants.BlufiConstants
+import com.espressif.ui.activities.EspMainActivity
 import com.six.iam.AuthManager
 import com.six.iot.BuildConfig
 import com.six.iot.Device
@@ -43,11 +43,11 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.json.JSONObject
-import com.espressif.ui.activities.EspMainActivity
 
 class DeviceFragment : Fragment(), DeviceHandlerHook {
     companion object {
         private val TAG = DeviceFragment::class.java.simpleName
+        val KEY_USER_OPEN_ID: String = "key_user_open_id"
     }
 
     private var _binding: FragmentDeviceBinding? = null
@@ -111,7 +111,7 @@ class DeviceFragment : Fragment(), DeviceHandlerHook {
             val context = requireContext()
             if (AuthManager.authenticated(context)) {
                 val intent = Intent(context, EspMainActivity::class.java).apply {
-                    putExtra(BlufiConstants.KEY_USER_OPEN_ID, userUtil.readUserOpenId(requireActivity()))
+                    putExtra(KEY_USER_OPEN_ID, userUtil.readUserOpenId(requireActivity()))
                 }
                 startActivity(intent)
             } else {

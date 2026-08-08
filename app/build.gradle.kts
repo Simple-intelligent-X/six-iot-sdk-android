@@ -65,7 +65,6 @@ dependencies {
     implementation(project(":flutter"))
 
     implementation(project(":lib-auth"))
-    implementation(project(":lib-esp32-blufi-app"))
     implementation(project(":lib-esp32-npm-app"))
 
     // Add your other app-level dependencies here
