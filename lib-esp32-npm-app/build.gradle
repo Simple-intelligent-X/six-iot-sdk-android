@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
@@ -25,7 +27,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
 
-//        missingDimensionStrategy 'authMethod', 'webview'
+        buildConfigField("String", "DEVICE_BIND_URL", "\"https://ext.iot.shuhenglianchang.com/iot/device/binding\"")
     }
 
     sourceSets {
@@ -86,15 +88,17 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     publishing {
         multipleVariants {
             allVariants()
             withSourcesJar()
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -125,7 +129,7 @@ dependencies {
     implementation libs.androidx.preference
 
     // Protobuf - Use consistent versions
-    implementation 'com.google.protobuf:protobuf-javalite:3.21.9'
+    implementation libs.protobuf.javalite
 
     implementation libs.tink.android
     implementation libs.esp.idf.provisioning.android

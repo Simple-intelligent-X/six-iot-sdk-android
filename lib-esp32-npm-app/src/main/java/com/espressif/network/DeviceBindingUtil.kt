@@ -1,6 +1,7 @@
 package com.espressif.network
 
 import android.util.Log
+import com.espressif.wifi_provisioning.BuildConfig
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -25,8 +26,7 @@ class DeviceBindingUtil {
         signature: String,
         hook: BindingHandlerHook
     ) {
-        // TODO: Move this URL to your BuildConfig or a centralized Config file
-        val baseUrl = "https://ext.iot.shuhenglianchang.com/iot/device/binding"
+        val baseUrl = BuildConfig.DEVICE_BIND_URL
         val httpUrl = baseUrl.toHttpUrlOrNull()
 
         if (httpUrl == null) {
@@ -62,8 +62,8 @@ class DeviceBindingUtil {
                     return
                 }
 
-                val responseBody = response.body?.string()
-                if (responseBody.isNullOrEmpty()) {
+                val responseBody = response.body.string()
+                if (responseBody.isEmpty()) {
                     Log.e(tag, "Device binding response body was empty.")
                     hook.onBindingFailure()
                     return

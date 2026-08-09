@@ -10,16 +10,14 @@ android {
     defaultConfig {
         minSdk = 29
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        "proguard-rules.pro"
-
+        //Default to use WebView to hold the authentication page, another option is to use Custom Tab of the browser
         buildConfigField("String", "AUTH_HANDLER_TYPE", "\"WEBVIEW\"")
         buildConfigField("String", "WEBVIEW_AUTH_ACTIVITY_PKG", "\"com.six.iot\"")
         buildConfigField("String", "WEBVIEW_AUTH_ACTIVITY_CLASS", "\"com.six.iot.ui.auth.webview.WebViewAuthActivity\"")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
-
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -28,12 +26,10 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildFeatures {
@@ -43,8 +39,13 @@ android {
     }
 }
 
-dependencies {
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
 
+dependencies {
     implementation(project(":lib-auth-appauth-core"))
 
     implementation(libs.androidx.core.ktx)

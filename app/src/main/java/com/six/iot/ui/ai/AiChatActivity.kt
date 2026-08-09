@@ -1,17 +1,12 @@
 package com.six.iot.ui.ai
 
 import android.Manifest
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Handler
-import android.os.IBinder
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
@@ -31,7 +26,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.six.iot.R
 import com.six.iot.databinding.ActivityAiChatBinding
-import com.six.iot.services.MqttClientService
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -67,24 +61,10 @@ class AiChatActivity : AppCompatActivity() {
     private val okHttpClient = OkHttpClient()
     private val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
 
-    private var mqttService: MqttClientService? = null
-    private var isMqttBound = false
     private val handler = Handler(Looper.getMainLooper())
 
     private var recordingThread: Thread? = null
 
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as MqttClientService.MqttBinder
-            mqttService = binder.getService()
-            isMqttBound = true
-            Log.d(TAG, "MQTT Service connected")
-        }
-        override fun onServiceDisconnected(name: ComponentName?) {
-            isMqttBound = false
-            Log.d(TAG, "MQTT Service disconnected")
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,10 +75,6 @@ class AiChatActivity : AppCompatActivity() {
         setupChatList()
         setupInputs()
         setupWebSocket()
-
-        Intent(this, MqttClientService::class.java).also { intent ->
-            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        }
 
         addAiMessage("Hello! I'm your IoT AI assistant. Speak Chinese or English, and I'll help you.")
     }
@@ -387,14 +363,14 @@ class AiChatActivity : AppCompatActivity() {
     }
 
     private fun executeMqttCommand(action: String) {
-        if (!isMqttBound) return
+        //if (!isMqttBound) return
         try {
             val guid = "your-device-guid"
             val productId = "your-product-id"
             val url = "ssl://a391en72ie4vj-ats.iot.ap-southeast-1.amazonaws.com:8883"
             val topic = "$productId/$guid/shadow/update"
             val payload = "{\"state\":{\"desired\":{\"light\":\"$action\"}}}"
-            mqttService?.publish(url, topic, payload)
+            //mqttService?.publish(url, topic, payload)
         } catch (e: Exception) { Log.e(TAG, "Failed to send MQTT command", e) }
     }
 
@@ -454,7 +430,6 @@ class AiChatActivity : AppCompatActivity() {
         super.onDestroy()
         if (isRecording) stopVoiceRecording()
         try { webSocket?.close(1000, "Activity Destroyed") } catch (_: Exception) {}
-        if (isMqttBound) unbindService(serviceConnection)
         handler.removeCallbacksAndMessages(null)
     }
 }

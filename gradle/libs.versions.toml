@@ -9,12 +9,12 @@ cameraCore = "1.5.1"
 codeScanner = "2.1.2"
 constraintlayoutVersion = "2.1.4"
 desugar_jdk_libs = "2.1.5"
-espIdfProvisioningAndroid = "lib-2.4.2"
+espIdfProvisioningAndroid = "lib-2.4.4"
 espressoCoreVersion = "3.5.1"
 eventbus = "3.3.1"
 googleMaterial = "1.12.0"
 gridlayout = "1.1.0"
-kotlin = "2.2.20"
+kotlin = "2.4.10"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -32,9 +32,10 @@ appauth = "0.11.1"
 bumptechGlide = "5.0.5"
 orgEclipsePahoAndroidService = "1.1.1"
 orgEclipsePahoClientMqttv3 = "1.2.5"
+pahoMqttAndroid = "4.4.2"
 playServicesThreadnetwork = "16.3.0"
 preference = "1.2.1"
-protobufJavalite = "4.33.0"
+protobufJavalite = "3.21.9"
 rxandroid = "3.0.2"
 rxjava = "3.1.12"
 squareupOkio = "3.16.2"
@@ -93,6 +94,7 @@ material-v1120 = { module = "com.google.android.material:material", version.ref 
 material-v161 = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 org-eclipse-paho-client-mqttv3 = { module = "org.eclipse.paho:org.eclipse.paho.client.mqttv3", version.ref = "orgEclipsePahoClientMqttv3" }
 org-eclipse-paho-android-service = { module = "org.eclipse.paho:org.eclipse.paho.android.service", version.ref = "orgEclipsePahoAndroidService" }
+paho-mqtt-android = { module = "com.github.hannesa2:paho.mqtt.android", version.ref = "pahoMqttAndroid" }
 play-services-threadnetwork = { module = "com.google.android.gms:play-services-threadnetwork", version.ref = "playServicesThreadnetwork" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 rxandroid = { module = "io.reactivex.rxjava3:rxandroid", version.ref = "rxandroid" }

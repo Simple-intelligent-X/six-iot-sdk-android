@@ -40,8 +40,6 @@ apply(from = File(
 
 // Include native Android modules
 include(":app")
-include(":lib-esp32-blufi-core")
 include(":lib-auth")
-include(":lib-esp32-blufi-app")
 include(":lib-auth-appauth-core")
 include(":lib-esp32-npm-app")
