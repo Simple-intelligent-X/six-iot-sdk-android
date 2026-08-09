@@ -1,12 +1,8 @@
 package com.six.iot.ui.device
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.os.Bundle
-import android.os.IBinder
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -32,11 +28,9 @@ import com.six.iot.R
 import com.six.iot.UserUtil
 import com.six.iot.databinding.FragmentDeviceBinding
 import com.six.iot.events.AuthnFailEvent
-import com.six.iot.events.MqttConnectedEvent
 import com.six.iot.events.ShadowGetAcceptedEvent
 import com.six.iot.events.ShadowUpdateAcceptedEvent
-import com.six.iot.events.StartMqttServiceEvent
-import com.six.iot.services.MqttClientService
+import com.six.iot.mqtt.MqttClientManager
 import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
 import org.greenrobot.eventbus.EventBus
@@ -47,7 +41,7 @@ import org.json.JSONObject
 class DeviceFragment : Fragment(), DeviceHandlerHook {
     companion object {
         private val TAG = DeviceFragment::class.java.simpleName
-        val KEY_USER_OPEN_ID: String = "key_user_open_id"
+        const val KEY_USER_OPEN_ID: String = "key_user_open_id"
     }
 
     private var _binding: FragmentDeviceBinding? = null
@@ -55,32 +49,9 @@ class DeviceFragment : Fragment(), DeviceHandlerHook {
     private lateinit var deviceUtil: DeviceUtil
     private lateinit var userUtil: UserUtil
     private lateinit var deviceAdapter: DeviceAdapter
-    private var mqttService: MqttClientService? = null
-    private var isMqttServiceBound = false
-    private var pendingMqttEvent: StartMqttServiceEvent? = null
     private var isLoadingDevices = false
 
     private val loadDevicesRunnable = Runnable { loadDevices() }
-
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            Log.i(TAG, "MqttClientService bound successfully")
-            val binder = service as MqttClientService.MqttBinder
-            mqttService = binder.getService()
-            isMqttServiceBound = true
-
-            pendingMqttEvent?.let {
-                processMqttConnections(it)
-                pendingMqttEvent = null
-            }
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            Log.i(TAG, "MqttClientService disconnected")
-            mqttService = null
-            isMqttServiceBound = false
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -162,27 +133,7 @@ class DeviceFragment : Fragment(), DeviceHandlerHook {
         view?.removeCallbacks(loadDevicesRunnable)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        stopMqttService()
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onStartMqttServiceEvent(event: StartMqttServiceEvent) {
-        if (!AuthManager.authenticated(requireContext())) {
-            EventBus.getDefault().post(AuthnFailEvent("User not authenticated"))
-            return
-        }
-        pendingMqttEvent = event
-        if (!isMqttServiceBound) {
-            val intent = Intent(this.context, MqttClientService::class.java)
-            requireContext().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-            return
-        }
-        processMqttConnections(event)
-    }
-
-    //When the MQTT connection is established, subscribe to the topics
+    /*//When the MQTT connection is established, subscribe to the topics
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMqttConnectedEvent(event: MqttConnectedEvent) {
         deviceAdapter.getSubTopics().forEach { topic ->
@@ -191,7 +142,7 @@ class DeviceFragment : Fragment(), DeviceHandlerHook {
         deviceAdapter.getPubTopics().forEach { topic ->
             mqttService?.publish(event.url, topic, "{}")
         }
-    }
+    }*/
 
     private fun loadDevices() {
         if (isLoadingDevices || _binding == null || context == null) return
@@ -240,39 +191,62 @@ class DeviceFragment : Fragment(), DeviceHandlerHook {
             } ?: emptyList()
 
             deviceAdapter.submitList(devices)
+            connectAndSyncDevices(devices)
+        }
+    }
 
-            val urlToProductIds = mutableMapOf<String, MutableList<String>>()
-            val urlToAuthConfig = mutableMapOf<String, Map<String, Any>>()
+    private fun connectAndSyncDevices(devices: List<Device>) {
+        val context = context ?: return
+        val idToken = AuthManager.authenticatedIdToken(context) ?: return
 
-            devices.forEach { device ->
-                val productId = device.productId
-                val federateIot = device.product["federateIot"] as? Map<*, *>
-                val platform = federateIot?.get("platform") as? String
+        val urlToProductIds = mutableMapOf<String, MutableList<String>>()
+        val urlToAuthConfig = mutableMapOf<String, Map<String, Any>>()
 
-                val (resolvedUrl, authConfig) = when (platform) {
-                    "AwsIotCore" -> {
-                        val target = federateIot["target"] as? Map<*, *>
-                        val endpoint = target?.get("iotEndpoint") as? String ?: ""
-                        val url = "wss://$endpoint/mqtt"
-                        val config = mapOf("customAuthz" to true, "customAuthzUsername" to BuildConfig.AWS_IOT_CUSTOM_AUTHZ_USERNAME)
-                        url to config
-                    }
-                    else -> {
-                        val url = BuildConfig.MQTT_BROKER_URL
-                        val config = mapOf("customAuthz" to false, "customAuthzUsername" to "")
-                        url to config
-                    }
+        devices.forEach { device ->
+            val productId = device.productId
+            val federateIot = device.product["federateIot"] as? Map<*, *>
+            val platform = federateIot?.get("platform") as? String
+
+            val (resolvedUrl, authConfig) = when (platform) {
+                "AwsIotCore" -> {
+                    val target = federateIot["target"] as? Map<*, *>
+                    val endpoint = target?.get("iotEndpoint") as? String ?: ""
+                    val url = "wss://$endpoint/mqtt"
+                    val config = mapOf("customAuthz" to true, "customAuthzUsername" to BuildConfig.AWS_IOT_CUSTOM_AUTHZ_USERNAME)
+                    url to config
                 }
-                urlToProductIds.getOrPut(resolvedUrl) { mutableListOf() }.add(productId)
-                urlToAuthConfig[resolvedUrl] = authConfig
+                else -> {
+                    val url = BuildConfig.MQTT_BROKER_URL
+                    val config = mapOf("customAuthz" to false, "customAuthzUsername" to "")
+                    url to config
+                }
             }
+            urlToProductIds.getOrPut(resolvedUrl) { mutableListOf() }.add(productId)
+            urlToAuthConfig[resolvedUrl] = authConfig
+        }
 
-            EventBus.getDefault().post(StartMqttServiceEvent(
-                urlToProductIds = urlToProductIds,
-                urlToAuthConfig = urlToAuthConfig,
-                subTopics = deviceAdapter.getSubTopics(),
-                pubTopics = deviceAdapter.getPubTopics()
-            ))
+        urlToProductIds.forEach { (url, productIds) ->
+            val authConfig = urlToAuthConfig[url] ?: emptyMap()
+            val customAuthz = authConfig["customAuthz"] as? Boolean ?: false
+            val customAuthzUsername = authConfig["customAuthzUsername"] as? String ?: ""
+
+            MqttClientManager.connect(
+                url = url,
+                idToken = idToken,
+                customAuthz = customAuthz,
+                customAuthzUserName = customAuthzUsername
+            )
+
+            // Devices whose productId belongs to this url — this is what gives us
+            // the guid needed to build each device's actual topic strings.
+            val devicesForUrl = devices.filter { it.productId in productIds }
+            devicesForUrl.forEach { device ->
+                listOf(
+                    "${device.productId}/${device.guid}/shadow/update/accepted",
+                    "${device.productId}/${device.guid}/shadow/get/accepted"
+                ).forEach { topic -> MqttClientManager.subscribe(url, topic) }
+                MqttClientManager.publish(url, "${device.productId}/${device.guid}/shadow/get", "{}")
+            }
         }
     }
 
@@ -331,7 +305,7 @@ class DeviceFragment : Fragment(), DeviceHandlerHook {
         return map
     }
 
-    private fun processMqttConnections(event: StartMqttServiceEvent) {
+    /*private fun processMqttConnections(event: StartMqttServiceEvent) {
         val context = context ?: return
         val idToken = AuthManager.authenticatedIdToken(context) ?: return
 
@@ -362,7 +336,7 @@ class DeviceFragment : Fragment(), DeviceHandlerHook {
             MqttClientService.stopService(requireContext())
             isMqttServiceBound = false
         }
-    }
+    }*/
 }
 
 class DeviceAdapter(
@@ -377,9 +351,6 @@ class DeviceAdapter(
         devices.addAll(newDevices)
         notifyDataSetChanged()
     }
-
-    fun getSubTopics(): List<String> = devices.flatMap { listOf("${it.productId}/${it.guid}/shadow/update/accepted", "${it.productId}/${it.guid}/shadow/get/accepted") }
-    fun getPubTopics(): List<String> = devices.map { "${it.productId}/${it.guid}/shadow/get" }
 
     fun updateDeviceState(guid: String, newStatus: String, newShadow: Map<String, Any>?): Int {
         val index = devices.indexOfFirst { it.guid == guid }

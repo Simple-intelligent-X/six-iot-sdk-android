@@ -32,6 +32,7 @@ appauth = "0.11.1"
 bumptechGlide = "5.0.5"
 orgEclipsePahoAndroidService = "1.1.1"
 orgEclipsePahoClientMqttv3 = "1.2.5"
+pahoMqttAndroid = "4.4.2"
 playServicesThreadnetwork = "16.3.0"
 preference = "1.2.1"
 protobufJavalite = "3.21.9"
@@ -93,6 +94,7 @@ material-v1120 = { module = "com.google.android.material:material", version.ref 
 material-v161 = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 org-eclipse-paho-client-mqttv3 = { module = "org.eclipse.paho:org.eclipse.paho.client.mqttv3", version.ref = "orgEclipsePahoClientMqttv3" }
 org-eclipse-paho-android-service = { module = "org.eclipse.paho:org.eclipse.paho.android.service", version.ref = "orgEclipsePahoAndroidService" }
+paho-mqtt-android = { module = "com.github.hannesa2:paho.mqtt.android", version.ref = "pahoMqttAndroid" }
 play-services-threadnetwork = { module = "com.google.android.gms:play-services-threadnetwork", version.ref = "playServicesThreadnetwork" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 rxandroid = { module = "io.reactivex.rxjava3:rxandroid", version.ref = "rxandroid" }

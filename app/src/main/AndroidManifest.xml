@@ -12,6 +12,7 @@
     </queries>
 
     <application
+        android:name=".SixIotApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -51,8 +52,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <!-- Services -->
-        <service android:name=".services.MqttClientService" />
-        <service android:name="org.eclipse.paho.android.service.MqttService" />
+        <service android:name="info.mqtt.android.service.MqttService" />
 
         <!-- Activities from other libraries -->
         <activity

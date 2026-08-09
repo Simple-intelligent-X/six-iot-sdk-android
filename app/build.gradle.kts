@@ -88,8 +88,9 @@ dependencies {
     implementation(libs.eventbus)
     implementation(libs.tencent.wechat.sdk)
 
-    implementation(libs.org.eclipse.paho.android.service)
+    //implementation(libs.org.eclipse.paho.android.service)
     implementation(libs.org.eclipse.paho.client.mqttv3)
+    implementation(libs.paho.mqtt.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

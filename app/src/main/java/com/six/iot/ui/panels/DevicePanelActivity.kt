@@ -1,11 +1,8 @@
 package com.six.iot.ui.panels
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.os.Bundle
-import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
@@ -22,12 +19,11 @@ import com.six.iot.BuildConfig
 import com.six.iot.Device
 import com.six.iot.R
 import com.six.iot.databinding.ActivityDevicePanelBinding
-import com.six.iot.events.MqttConnectedEvent
 import com.six.iot.events.ShadowGetAcceptedEvent
 import com.six.iot.events.ShadowUpdateAcceptedEvent
+import com.six.iot.mqtt.MqttClientManager
 import com.six.iot.network.UnbindDeviceUtil
 import com.six.iot.network.UnbindHandlerHook
-import com.six.iot.services.MqttClientService
 import io.flutter.embedding.android.FlutterFragment
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
@@ -37,8 +33,6 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.util.Locale
-import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.collections.get
 
 class DevicePanelActivity : AppCompatActivity() {
 
@@ -47,60 +41,15 @@ class DevicePanelActivity : AppCompatActivity() {
     private var deviceGuid: String? = null
     private var deviceName: String? = null
     private var productId: String? = null
+
+    private var customAuthz: Boolean = false
+    private var customAuthzUsername: String? = null
+
     private var deviceStatus: String? = null
 
     private var mqttUrl: String? = null
     private var deviceOn: Int? = 0
     private var flutterEngineId: String? = null
-
-    // Properties for binding to the MqttClientService
-    private var mqttService: MqttClientService? = null
-    private var isMqttServiceBound = false
-
-    private val publishQueue = ConcurrentLinkedQueue<Pair<String, String>>()
-    private val subscribeQueue = ConcurrentLinkedQueue<String>()
-
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as MqttClientService.MqttBinder
-            mqttService = binder.getService()
-            isMqttServiceBound = true
-            Log.d(TAG, "MqttClientService connected")
-
-            if (productId != null && deviceGuid != null) {
-                val topics = listOf(
-                    "$productId/$deviceGuid/shadow/update/accepted",
-                    "$productId/$deviceGuid/shadow/get/accepted"
-                )
-                topics.forEach { topic-> subscribe(topic) }
-                publish( "$productId/$deviceGuid/shadow/get", "{}")
-            }
-            processSubscribeQueue()
-            processPublishQueue()
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            mqttService = null
-            isMqttServiceBound = false
-            Log.d(TAG, "MqttClientService disconnected")
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onMqttConnectedEvent(event: MqttConnectedEvent) {
-        if (event.url == mqttUrl) {
-            if (productId != null && deviceGuid != null) {
-                val topics = listOf(
-                    "$productId/$deviceGuid/shadow/update/accepted",
-                    "$productId/$deviceGuid/shadow/get/accepted"
-                )
-                topics.forEach { topic -> subscribe(topic) }
-                publish( "$productId/$deviceGuid/shadow/get", "{}")
-            }
-            processSubscribeQueue()
-            processPublishQueue()
-        }
-    }
 
     companion object {
         private const val TAG = "DevicePanelActivity"
@@ -109,18 +58,22 @@ class DevicePanelActivity : AppCompatActivity() {
         const val EXTRA_DEVICE_NAME = "EXTRA_DEVICE_NAME"
         const val EXTRA_DEVICE_PRODUCT_ID = "EXTRA_DEVICE_PRODUCT_ID"
         const val EXTRA_DEVICE_STATUS = "EXTRA_DEVICE_STATUS"
-
         const val EXTRA_MQTT_URL = "EXTRA_MQTT_URL"
+        const val EXTRA_MQTT_CUSTOM_AUTHZ = "EXTRA_MQTT_CUSTOM_AUTHZ"
+        const val EXTRA_MQTT_CUSTOM_AUTHZ_USERNAME = "EXTRA_MQTT_CUSTOM_AUTHZ_USERNAME"
         const val EXTRA_DEVICE_ON = "EXTRA_DEVICE_ON"
 
         @JvmStatic
         fun newIntent(context: Context, device: Device): Intent {
+            val (mqttUrl, customAuthz, customAuthzUsername) = resolveMqttConfig(device)
             return Intent(context, DevicePanelActivity::class.java).apply {
                 putExtra(EXTRA_DEVICE_NAME, device.name)
                 putExtra(EXTRA_DEVICE_GUID, device.guid)
                 putExtra(EXTRA_DEVICE_PRODUCT_ID, device.productId)
                 putExtra(EXTRA_DEVICE_STATUS, device.status)
-                putExtra(EXTRA_MQTT_URL, getMqttUrl(device))
+                putExtra(EXTRA_MQTT_URL, mqttUrl)
+                putExtra(EXTRA_MQTT_CUSTOM_AUTHZ, customAuthz)
+                putExtra(EXTRA_MQTT_CUSTOM_AUTHZ_USERNAME, customAuthzUsername)
                 val state = device.shadow["state"] as? Map<*, *>
                 val reported = state?.get("reported") as? Map<*, *>
                 val lightStatus = reported?.get("light") as? String
@@ -130,24 +83,16 @@ class DevicePanelActivity : AppCompatActivity() {
             }
         }
 
-        fun getMqttUrl(device: Device): String {
+        fun resolveMqttConfig(device: Device): Triple<String, Boolean, String> {
             val federateIot = device.product["federateIot"] as? Map<*, *>
             val platform = federateIot?.get("platform") as? String
-            // Determine URL and Auth Config based on platform
-            when (platform) {
+            return when (platform) {
                 "AwsIotCore" -> {
                     val target = federateIot["target"] as? Map<*, *>
                     val endpoint = target?.get("iotEndpoint") as? String ?: ""
-                    val url = "wss://$endpoint/mqtt"
-
-                    return url
+                    Triple("wss://$endpoint/mqtt", true, BuildConfig.AWS_IOT_CUSTOM_AUTHZ_USERNAME)
                 }
-
-                else -> {
-                    // Default or null
-                    val url = BuildConfig.MQTT_BROKER_URL
-                    return url;
-                }
+                else -> Triple(BuildConfig.MQTT_BROKER_URL, false, "")
             }
         }
 
@@ -178,11 +123,43 @@ class DevicePanelActivity : AppCompatActivity() {
         productId = intent.getStringExtra(EXTRA_DEVICE_PRODUCT_ID)
         deviceOn = intent.getIntExtra(EXTRA_DEVICE_ON, 0)
         mqttUrl = intent.getStringExtra(EXTRA_MQTT_URL)
+        customAuthz = intent.getBooleanExtra(EXTRA_MQTT_CUSTOM_AUTHZ, false)
+        customAuthzUsername = intent.getStringExtra(EXTRA_MQTT_CUSTOM_AUTHZ_USERNAME)
 
         setToolbar()
+        connectAndSyncMqtt()
         // Post the heavy Flutter engine initialization to run after the first layout pass.
         // This makes the activity and its loading bar appear much faster.
         binding.root.post { initializeFlutter() }
+    }
+
+    private fun connectAndSyncMqtt() {
+        val url = mqttUrl
+        val pid = productId
+        val guid = deviceGuid
+        if (url == null || pid == null || guid == null) {
+            Log.e(TAG, "Missing mqttUrl/productId/deviceGuid — skipping MQTT connect")
+            return
+        }
+        val idToken = AuthManager.authenticatedIdToken(this)
+        if (idToken == null) {
+            Log.e(TAG, "No id token available — skipping MQTT connect")
+            return
+        }
+
+        MqttClientManager.connect(
+            url = url,
+            idToken = idToken,
+            customAuthz = customAuthz,
+            customAuthzUserName = customAuthzUsername ?: ""
+        )
+
+        listOf(
+            "$pid/$guid/shadow/update/accepted",
+            "$pid/$guid/shadow/get/accepted"
+        ).forEach { topic -> subscribe(topic) }
+
+        publish("$pid/$guid/shadow/get", "{}")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -346,51 +323,20 @@ class DevicePanelActivity : AppCompatActivity() {
     }
 
     private fun publish(topic: String, payload: String) {
-        if (isMqttServiceBound && mqttService != null) {
-            mqttService!!.publish(mqttUrl!!, topic, payload)
-        } else {
-            Log.w(TAG, "Service not bound, queuing publish for topic: $topic")
-            publishQueue.add(Pair(topic, payload))
+        mqttUrl?.let { url ->
+            MqttClientManager.publish(url, topic, payload)
         }
     }
 
     private fun subscribe(topic: String) {
-        if (isMqttServiceBound && mqttService != null) {
-            mqttService!!.subscribe(mqttUrl!!, topic)
-        } else {
-            Log.w(TAG, "Service not bound, queuing subscribe for topic: $topic")
-            subscribeQueue.add(topic)
-        }
-    }
-
-    private fun processPublishQueue() {
-        synchronized(publishQueue) {
-            Log.d(TAG, "Processing ${publishQueue.size} queued publish requests.")
-            while (publishQueue.isNotEmpty()) {
-                publishQueue.poll()?.let { (topic, payload) ->
-                    publish(topic, payload) // Re-call publish to ensure service is now bound
-                }
-            }
-        }
-    }
-
-    private fun processSubscribeQueue() {
-        synchronized(subscribeQueue) {
-            Log.d(TAG, "Processing ${publishQueue.size} queued subscribe requests.")
-            while (subscribeQueue.isNotEmpty()) {
-                subscribeQueue.poll()?.let { topic ->
-                    subscribe(topic) // Re-call subcribe to ensure service is now bound
-                }
-            }
+        mqttUrl?.let { url ->
+            MqttClientManager.subscribe(url, topic)
         }
     }
 
     override fun onStart() {
         super.onStart()
         EventBus.getDefault().register(this)
-        Intent(this, MqttClientService::class.java).also { intent ->
-            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        }
     }
 
     override fun onResume() {
@@ -412,10 +358,6 @@ class DevicePanelActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         EventBus.getDefault().unregister(this)
-        if (isMqttServiceBound) {
-            unbindService(serviceConnection)
-            isMqttServiceBound = false
-        }
     }
 
     override fun onDestroy() {

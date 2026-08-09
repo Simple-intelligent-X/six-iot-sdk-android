@@ -31,6 +31,6 @@ data class MqttConnectedEvent(val url: String)
 /**
  * Event to start the MqttService.
  * */
-data class StartMqttServiceEvent(val urlToProductIds: Map<String, List<String>>, val urlToAuthConfig: Map<String, Map<String, Any>>, val subTopics: List<String>, val pubTopics: List<String>)
+//data class StartMqttServiceEvent(val urlToProductIds: Map<String, List<String>>, val urlToAuthConfig: Map<String, Map<String, Any>>, val subTopics: List<String>, val pubTopics: List<String>)
 
 
