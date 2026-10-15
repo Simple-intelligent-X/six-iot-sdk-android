@@ -65,8 +65,7 @@ Next, update your Identity Provider (IdP) endpoints in `lib-auth/src/main/res/ra
   "end_session_redirect_uri": "com.six.iot:/oauth2redirect",
   "authorization_scope": "openid profile",
   "authorization_endpoint_uri": "https://abc123.app.shuhenglianchang.com/oauth2/authorize",
-  "token_endpoint_uri": "https://abc123.app.shuhenglianchang.com/oauth2/token",
-  "registration_endpoint_uri": "https://abc123.app.shuhenglianchang.com/oauth2/authorize",
+  "token_endpoint_uri": "https://abc123.app.shuhenglianchang.com/oauth2/token", q
   "end_session_endpoint": "https://abc123.app.shuhenglianchang.com/connect/logout",
   "user_info_endpoint_uri": "https://abc123.app.shuhenglianchang.com/userinfo",
   "https_required": true
