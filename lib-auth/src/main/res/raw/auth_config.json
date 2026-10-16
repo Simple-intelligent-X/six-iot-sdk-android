@@ -1,5 +1,5 @@
 {
-  "client_id": "six-iot-sdk-android",
+  "client_id": "sample-iot-sdk-android",
   "redirect_uri": "com.six.iot:/oauth2redirect",
   "end_session_redirect_uri": "com.six.iot:/oauth2redirect",
   "authorization_scope": "openid profile",
